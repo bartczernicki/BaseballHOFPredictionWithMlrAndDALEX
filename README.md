@@ -26,6 +26,11 @@ Note: As the amount of All-Star Appearances increases this increases the weight 
 
 **XgBoost Learner Prediction Plot: All-Star Apperances vs Total Bases (TB)**
 Note: The XgBoost Learner (trained model) can be broken down into data visualizations that can aid in model performance analysis.  Based on this plot, note the implicit boundary of about 5,000 Total Bases & 9 All-Star Appearances as the threshold of MLB Baseball Hall Of Fame Induction.
+Plot explanation:
+- dark triangls - true positive - actual HOFer predicted by the model to be in HOF
+- dark circle - true negatives - NOT a HOFer predicted by the model NOT to be in HOF
+- white traingle - false positive - actual HOFer predicted by the model NOT to be in HOF
+- white circle - false negative - NOT a HOFer predicted by the model to be in HOF
 
 ![Variable Response](https://github.com/bartczernicki/BaseballHOFPredictionWithMlrAndDALEX/blob/master/Images/LearnerPredictionXgBoost.png)
 
