@@ -6,9 +6,11 @@
 **Mlr & DALEX Packages** allow you to craft R predictive models rapidly using sophisticated techniques such as: Bayeasian Optimization, Hyperparameter Tuning with Resampling etc.
 
 Mlr Package Information
+
 https://mlr-org.github.io/mlr/
 
 DALEX Package Information
+
 https://github.com/pbiecek/DALEX
 
 <a name="Results"></a>
@@ -24,4 +26,4 @@ https://github.com/pbiecek/DALEX
 
 
 **Prediction Breakdown - Willie Mays**
-![Predictin Breakdown](https://github.com/bartczernicki/BaseballHOFPredictionWithMlrAndDALEX/blob/master/Images/PredictionBreakdown-DerekJeter.png)
+![Predictin Breakdown](https://github.com/bartczernicki/BaseballHOFPredictionWithMlrAndDALEX/blob/master/Images/PredictionBreakdown-WillieMays.png)
