@@ -1,9 +1,11 @@
 if('DALEX' %in% rownames(installed.packages()) == FALSE) {install.packages('DALEX')}
 if('mlr' %in% rownames(installed.packages()) == FALSE) {install.packages('mlr')}
+if('xgboost' %in% rownames(installed.packages()) == FALSE) {install.packages('xgboost')}
 
 # Load the libraries
 library(DALEX)
 library(mlr)
+library(xgboost)
 
 wdPath = "/Users/bartczernicki-msft/Desktop/SourceCode/BaseballHOFDalex"
 setwd(wdPath)
@@ -15,7 +17,7 @@ trainingData$InductedToHallOfFame <- factor(ifelse(trainingData$InductedToHallOf
 validationData$InductedToHallOfFame <- factor(ifelse(validationData$InductedToHallOfFame =='TRUE', 1, 0))
 combinedData$InductedToHallOfFame <- factor(ifelse(combinedData$InductedToHallOfFame =='TRUE', 1, 0))
 trainingData <- subset(trainingData, select = -c(FullPlayerName, LastYearPlayed, ID))
-#validationData <- subset(validationData, select = -c(FullPlayerName, LastYearPlayed, ID))
+validationData <- subset(validationData, select = -c(FullPlayerName, LastYearPlayed, ID))
 combinedData <- subset(combinedData, select = -c(FullPlayerName, LastYearPlayed, ID))
 nrow(trainingData)
 nrow(validationData)
@@ -32,16 +34,18 @@ classif_task_combined <- makeClassifTask(id = "ap", data = combinedData, target 
 classif_lrn_rf <- makeLearner("classif.randomForest", predict.type = "prob")
 classif_lrn_glm <- makeLearner("classif.binomial", predict.type = "prob")
 classif_lrn_svm <- makeLearner("classif.ksvm", predict.type = "prob")
-
+classif_lrn_xgboost <- makeLearner("classif.xgboost", predict.type = "prob")
 
 classif_rf <- train(classif_lrn_rf, classif_task)
 classif_glm <- train(classif_lrn_glm, classif_task)
 classif_svm <- train(classif_lrn_svm, classif_task)
+classif_xgboost <- train(classif_lrn_xgboost, classif_task)
 
 # Pred
 predRf = predict(classif_rf, newdata = validationData)
 predGlm = predict(classif_glm, newdata = validationData)
 predSvm = predict(classif_svm, newdata = validationData)
+predXgBoost = predict(classif_xgboost, newdata = validationData)
 
 
 # Test Perf
@@ -50,11 +54,20 @@ getDefaultMeasure(classif_lrn_rf)
 performance(predRf, measures = list(tnr, tpr, lsr, f1, mmce, tp, acc, fdr, kappa))
 performance(predGlm, measures = list(tnr, tpr, lsr, f1, mmce, tp, acc, fdr, kappa))
 performance(predSvm, measures = list(tnr, tpr, lsr, f1, mmce, tp, acc, fdr, kappa))
+performance(predXgBoost, measures = list(tnr, tpr, lsr, f1, mmce, tp, acc, fdr, kappa))
 
 d <- generateThreshVsPerfData(predRf, measures = list(tpr, ppv, tp))
 plotThreshVsPerf(d)
+threshholdvsPerf_XgBoost <- generateThreshVsPerfData(predXgBoost, measures = list(tpr, ppv, tp, mmce))
+plotThreshVsPerf(threshholdvsPerf_XgBoost)
 rocMeasRf <- calculateROCMeasures(predRf)
 rocMeasRf
+
+# Plot ROC Curves
+df = generateThreshVsPerfData(list(xgBoost = predXgBoost, rf = predRf, glm = predGlm), measures = list(fpr, tpr)) 
+plotROCCurves(df)
+
+
 
 # Hyper Parameters
 getParamSet("classif.randomForest")
@@ -105,11 +118,32 @@ vi_classif_glm <- variable_importance(explainer_classif_glm, loss_function = los
 vi_classif_svm <- variable_importance(explainer_classif_svm, loss_function = loss_root_mean_square)
 plot(vi_classif_rf, vi_classif_glm, vi_classif_svm)
 
-# Variable Response - All Star Appearances
+# Variable Response - Random Forest Model - All Star Appearances Feature
 pdp_classif_rf  <- variable_response(explainer_classif_rf, variable = "AllStarAppearances", type = "pdp")
 pdp_classif_glm  <- variable_response(explainer_classif_glm, variable = "AllStarAppearances", type = "pdp")
 pdp_classif_svm  <- variable_response(explainer_classif_svm, variable = "AllStarAppearances", type = "pdp")
 plot(pdp_classif_rf, pdp_classif_glm, pdp_classif_svm)
+# Variable Response - Random Forest Model - HR Feature
+pdp_classif_rf  <- variable_response(explainer_classif_rf, variable = "HR", type = "pdp")
+pdp_classif_glm  <- variable_response(explainer_classif_glm, variable = "HR", type = "pdp")
+pdp_classif_svm  <- variable_response(explainer_classif_svm, variable = "HR", type = "pdp")
+plot(pdp_classif_rf, pdp_classif_glm, pdp_classif_svm)
+# Variable Response - Random Forest Model - MVP Feature
+pdp_classif_rf  <- variable_response(explainer_classif_rf, variable = "MVPs", type = "pdp")
+pdp_classif_glm  <- variable_response(explainer_classif_glm, variable = "MVPs", type = "pdp")
+pdp_classif_svm  <- variable_response(explainer_classif_svm, variable = "MVPs", type = "pdp")
+plot(pdp_classif_rf, pdp_classif_glm, pdp_classif_svm)
+# Variable Response - Random Forest Model - TB (Total Bases) Feature
+pdp_classif_rf  <- variable_response(explainer_classif_rf, variable = "TB", type = "pdp")
+pdp_classif_glm  <- variable_response(explainer_classif_glm, variable = "TB", type = "pdp")
+pdp_classif_svm  <- variable_response(explainer_classif_svm, variable = "TB", type = "pdp")
+plot(pdp_classif_rf, pdp_classif_glm, pdp_classif_svm)
+# Variable Response - Random Forest Model - GoldGloves Feature
+pdp_classif_rf  <- variable_response(explainer_classif_rf, variable = "GoldGloves", type = "pdp")
+pdp_classif_glm  <- variable_response(explainer_classif_glm, variable = "GoldGloves", type = "pdp")
+pdp_classif_svm  <- variable_response(explainer_classif_svm, variable = "GoldGloves", type = "pdp")
+plot(pdp_classif_rf, pdp_classif_glm, pdp_classif_svm)
+
 
 # Prediction Breakdown - Ichiro Suzuki
 newPred31 <- validationData[31,]
