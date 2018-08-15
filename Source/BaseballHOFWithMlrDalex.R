@@ -24,7 +24,8 @@ library(xgboost)            # Used for XgBoost classifier
 library(DALEX)              # Used for Model Explainers
 library(mlr)                # Used for training/orchestrating models
 
-
+# c) Check versions (optional)
+sessionInfo()
 
 # 2) SETUP TRAINING, VALIDATION & COMBINED DATA SETS
 
@@ -277,19 +278,18 @@ plot(prediction_breakdown_JeffKent)
 # What-If - Jeff Kent
 whatIf_rf_jeffKent <- ceteris_paribus(explainer_classif_rf, observation = jeffKentData)
 plot(whatIf_rf_jeffKent)
-selectedVariables <- c('H')
+selectedVariables <- c('MVPs')
 whatIf_rf_jeffKentAllStarApperances <- ceteris_paribus(explainer_classif_rf,
-  observation = jeffKentData, selected_variables = selectedVariables, grid_points = 4)
+  observation = jeffKentData, selected_variables = selectedVariables, grid_points = 20)
 plot(whatIf_rf_jeffKentAllStarApperances)
 str(whatIf_rf_jeffKentAllStarApperances)
 summary(whatIf_rf_jeffKentAllStarApperances)
 whatIf_rf_jeffKentAllStarApperances
 
-whatIf_rf_jeffKentAllStarApperances
+whatIf_rf_jeffKentAllStarApperances$new_x
 
 #Modified Prediction
 jeffKentData = head(fullPlayerData[fullPlayerData$FullPlayerName == "Jeff Kent",], 1)
-jeffKentData$H <- jeffKentData$H * 1.0092710997
 prediction_breakdown_JeffKent = prediction_breakdown(explainer_classif_rf, observation = jeffKentData)
 plot(prediction_breakdown_JeffKent)
 attributes(prediction_breakdown_JeffKent)
