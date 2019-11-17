@@ -1,4 +1,5 @@
-# TESTED ON MRO 3.5.0 & CRAN R 3.5.1
+# TESTED ON CRAN R 3.6.1
+# Last Updated: 11/16/2019
 # Check your R environment version
 version
 
@@ -6,13 +7,16 @@ version
 
 # 1) INSTALL & LOAD PACKAGES
 # a) INSTALL Core Modeling Packages
-if('ceterisParibus' %in% rownames(installed.packages()) == FALSE) {install.packages('ceterisParibus')}
-if('kernlab' %in% rownames(installed.packages()) == FALSE) {install.packages('kernlab')}
-if('randomForest' %in% rownames(installed.packages()) == FALSE) {install.packages('randomForest')}
-if('xgboost' %in% rownames(installed.packages()) == FALSE) {install.packages('xgboost')}
+install.packages('ceterisParibus')
+install.packages('kernlab')
+install.packages('randomForest')
+install.packages('xgboost')
 # ML Orchestration/Helper Packages
-if('DALEX' %in% rownames(installed.packages()) == FALSE) {install.packages('DALEX')}
-if('mlr' %in% rownames(installed.packages()) == FALSE) {install.packages('mlr')}
+install.packages('breakDown')
+install.packages('DALEX')
+install.packages('ingredients')
+install.packages('mlr')
+install.packages('pdp')
 
 # b) LOAD Package
 # Core Modeling Packages
@@ -21,8 +25,11 @@ library(kernlab)
 library(randomForest)       # Used For RandomForest classifier
 library(xgboost)            # Used for XgBoost classifier
 # Core Modeling Packages
+library(breakDown)
+library(ingredients)
 library(DALEX)              # Used for Model Explainers
 library(mlr)                # Used for training/orchestrating models
+library(pdp)
 
 # c) Check versions (optional)
 sessionInfo()
@@ -36,8 +43,8 @@ wdPath <- "/Users/bartczernicki-msft/Desktop/SourceCode/BaseballHOFDalex"
 setwd(wdPath)
 
 # b) Load Training Data CSV Files
-trainingData <- read.csv(file="HOFTrainingWithHeader.csv", header=TRUE, sep=",")
-validationData <- read.csv(file="HOFValidationWithHeader.csv", header=TRUE, sep=",")
+trainingData <- read.csv(file="BaseballHOFTrainingv2.csv", header=TRUE, sep=",")
+validationData <- read.csv(file="BaseballHOFValidationv2.csv", header=TRUE, sep=",")
 combinedData <- rbind(trainingData, validationData)
 
 # c) Change InductedToHallOfFame as a 1/0 binary factor
@@ -50,9 +57,9 @@ combinedData$InductedToHallOfFame <- factor(ifelse(combinedData$InductedToHallOf
 fullPlayerData <- combinedData
 
 # e) Remove ID columns (FullPLayerName, LastYearPlayed, ID) not needed for training classifier models
-trainingData <- subset(trainingData, select = -c(FullPlayerName, LastYearPlayed, ID))
-validationData <- subset(validationData, select = -c(FullPlayerName, LastYearPlayed, ID))
-combinedData <- subset(combinedData, select = -c(FullPlayerName, LastYearPlayed, ID))
+trainingData <- subset(trainingData, select = -c(FullPlayerName, LastYearPlayed, ID, OnHallOfFameBallot))
+validationData <- subset(validationData, select = -c(FullPlayerName, LastYearPlayed, ID, OnHallOfFameBallot))
+combinedData <- subset(combinedData, select = -c(FullPlayerName, LastYearPlayed, ID, OnHallOfFameBallot))
 nrow(trainingData)
 nrow(validationData)
 nrow(combinedData)
@@ -91,7 +98,6 @@ classif_xgboost <- train(classif_lrn_xgboost, classif_task)
 predRf = predict(classif_rf, newdata = validationData)
 predGlm = predict(classif_glm, newdata = validationData)
 predXgBoost = predict(classif_xgboost, newdata = validationData)
-predXgBoostTwo = predict(classif_xgboostTwo, newdata = validationData)
 
 
 
@@ -114,7 +120,6 @@ relevantPerformanceMetrics <- list(tpr, ppv, tp, mmce)
 threshholdvsPerf_Rf <- generateThreshVsPerfData(predRf, measures = relevantPerformanceMetrics)
 threshholdvsPerf_glm <- generateThreshVsPerfData(predGlm, measures = relevantPerformanceMetrics)
 threshholdvsPerf_XgBoost <- generateThreshVsPerfData(predXgBoost, measures = relevantPerformanceMetrics)
-
 # Plot performance metrics
 plotThreshVsPerf(threshholdvsPerf_Rf)
 plotThreshVsPerf(threshholdvsPerf_glm)
@@ -178,12 +183,14 @@ mp_classif_glm <- model_performance(explainer_classif_glm)
 mp_classif_xgboost <- model_performance(explainer_classif_xgboost)
 plot(mp_classif_rf, mp_classif_glm, mp_classif_xgboost)
 
-# d) Plot Variable Importance - Individually & Collectively
-vi_classif_rf <- variable_importance(explainer_classif_rf, loss_function = loss_root_mean_square)
-vi_classif_glm <- variable_importance(explainer_classif_glm, loss_function = loss_root_mean_square)
-vi_classif_xgboost <- variable_importance(explainer_classif_xgboost, loss_function = loss_root_mean_square)
-plot(vi_classif_rf, vi_classif_glm, vi_classif_xgboost)
-plot(vi_classif_xgboost)
+# d) Plot Feature Importance - Individually & Collectively
+vi_classif_rf <- ingredients::feature_importance(explainer_classif_rf, loss_function = loss_root_mean_square)
+vi_classif_glm <- ingredients::feature_importance(explainer_classif_glm, loss_function = loss_root_mean_square)
+vi_classif_xgboost <- ingredients::feature_importance(explainer_classif_xgboost, loss_function = loss_root_mean_square)
+plot(vi_classif_rf, vi_classif_glm, vi_classif_xgboost) #Plot all three feature importance
+plot(vi_classif_glm) #Plot GLM feature importance
+plot(vi_classif_rf) #Plot RF feature importance
+plot(vi_classif_xgboost) #Plot XgBoost feature importance
 
 # Variable Response - All Star Appearances Feature
 vr_AllStarAppearances_rf  <- variable_response(explainer_classif_rf, variable = "AllStarAppearances", type = "pdp")
@@ -223,16 +230,18 @@ prediction_breakdown_IchiroSuzuki <- prediction_breakdown(explainer_classif_rf, 
 prediction_breakdown_IchiroSuzuki
 plot(prediction_breakdown_IchiroSuzuki)
 # What-If - Ichiro Suzuki
-whatIf_rf_ichiroSuzuki <- ceteris_paribus(explainer_classif_rf, observation = ichiroSuzukiData, selected_variables = c("MVPs"))
+whatIf_rf_ichiroSuzuki <- what_if(explainer_classif_rf, observation = ichiroSuzukiData,
+                                  selected_variables = c("H", "TB", "AllStarAppearances"))
 whatIf_rf_ichiroSuzuki
-plot(whatIf_rf_ichiroSuzuki, split = "variables", color = "variables")
+plot(whatIf_rf_ichiroSuzuki)
 
 # Prediction Breakdown - Kirby Puckett
 kirbyPuckettData = head(fullPlayerData[fullPlayerData$FullPlayerName == "Kirby Puckett",], 1)
 prediction_breakdown_KirbyPuckett = prediction_breakdown(explainer_classif_rf, observation = kirbyPuckettData)
 plot(prediction_breakdown_KirbyPuckett)
 # What-If - Kirby Puckett
-whatIf_rf_kirbyPuckett <- ceteris_paribus(explainer_classif_rf, observation = kirbyPuckettData)
+whatIf_rf_kirbyPuckett <- what_if(explainer_classif_rf, observation = kirbyPuckettData,
+                                  selected_variables = c("H", "TB", "AllStarAppearances"))
 whatIf_rf_kirbyPuckett
 plot(whatIf_rf_kirbyPuckett)
 
@@ -256,37 +265,19 @@ mikeTroutData = head(fullPlayerData[fullPlayerData$FullPlayerName == "Mike Trout
 prediction_breakdown_mikeTroutData = prediction_breakdown(explainer_classif_rf, observation = mikeTroutData)
 plot(prediction_breakdown_mikeTroutData)
 # What-If - Mike Trout
-whatIf_rf_mikeTrout <- ceteris_paribus(explainer_classif_rf, observation = mikeTroutData, grid_points = 1000)
-whatIf_rf_mikeTrout
+whatIf_rf_mikeTrout <- what_if(explainer_classif_rf, observation = mikeTroutData,
+                               selected_variables = c("H", "TB", "AllStarAppearances"))
 plot(whatIf_rf_mikeTrout)
 
 # Prediction Breakdown - Jimmy Rollins
 jimmyRollinsData = head(fullPlayerData[fullPlayerData$FullPlayerName == "Jimmy Rollins",], 1)
 prediction_breakdown_JimmyRollins = prediction_breakdown(explainer_classif_rf, observation = jimmyRollinsData)
 plot(prediction_breakdown_JimmyRollins)
-# What-If - Jimmy Rollins
-whatIf_rf_jimmyRollins <- ceteris_paribus(explainer_classif_rf, observation = jimmyRollinsData)
-whatIf_glm_jimmyRollins <- ceteris_paribus(explainer_classif_glm, observation = jimmyRollinsData)
-jimmyRollinsDataXgBoost <- subset(jimmyRollinsData, select = -c(FullPlayerName, LastYearPlayed, ID))
-whatIf_xgBoost_jimmyRollins <- ceteris_paribus(explainer_classif_xgboost, observation = jimmyRollinsDataXgBoost)
-plot(whatIf_xgBoost_jimmyRollins)
 
 # Prediction Breakdown - Jeff Kent
 jeffKentData = head(fullPlayerData[fullPlayerData$FullPlayerName == "Jeff Kent",], 1)
 prediction_breakdown_JeffKent = prediction_breakdown(explainer_classif_rf, observation = jeffKentData)
 plot(prediction_breakdown_JeffKent)
-# What-If - Jeff Kent
-whatIf_rf_jeffKent <- ceteris_paribus(explainer_classif_rf, observation = jeffKentData)
-plot(whatIf_rf_jeffKent)
-selectedVariables <- c('MVPs')
-whatIf_rf_jeffKentAllStarApperances <- ceteris_paribus(explainer_classif_rf,
-  observation = jeffKentData, selected_variables = selectedVariables, grid_points = 20)
-plot(whatIf_rf_jeffKentAllStarApperances)
-str(whatIf_rf_jeffKentAllStarApperances)
-summary(whatIf_rf_jeffKentAllStarApperances)
-whatIf_rf_jeffKentAllStarApperances
-
-whatIf_rf_jeffKentAllStarApperances$new_x
 
 #Modified Prediction
 jeffKentData = head(fullPlayerData[fullPlayerData$FullPlayerName == "Jeff Kent",], 1)
