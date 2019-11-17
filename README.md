@@ -5,9 +5,9 @@
 ## Overview ##
 This demo shows how MLB Baseball historical data from 1876 - 2017 can be used to craft a learning model to predict Hall Of Fame induction.
 
-**Mlr & DALEX Packages** allow you to craft R predictive models rapidly using sophisticated techniques such as: Bayeasian Optimization, Hyperparameter Tuning with Resampling etc.
+**mlr & DALEX Packages** allow you to craft R predictive models rapidly using sophisticated techniques such as: Bayeasian Optimization, Hyperparameter Tuning with Resampling etc.
 
-Mlr Package Information
+mlr Package Information
 
 https://mlr-org.github.io/mlr/
 
