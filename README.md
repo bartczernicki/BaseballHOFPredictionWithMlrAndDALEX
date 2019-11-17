@@ -36,12 +36,12 @@ Plot explanation:
 
 
 **Prediction Breakdown - Derek Jeter**
-Note: The impact of each of the key features, which make up the final prediction of (0.89 probabilty)
+Note: The impact of each of the key features, which make up the final prediction of (0.972 probabilty)
 
 ![Variable Response](https://github.com/bartczernicki/BaseballHOFPredictionWithMlrAndDALEX/blob/master/Images/PredictionBreakdown-DerekJeter.png)
 
 
 **Prediction Breakdown - Willie Mays**
-Note: The impact of each of the key features, which make up the final prediction of (0.97 probabilty)
+Note: The impact of each of the key features, which make up the final prediction of (0.992 probabilty)
 
 ![Predictin Breakdown](https://github.com/bartczernicki/BaseballHOFPredictionWithMlrAndDALEX/blob/master/Images/PredictionBreakdown-WillieMays.png)
