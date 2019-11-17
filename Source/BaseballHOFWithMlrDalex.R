@@ -1,48 +1,60 @@
 # TESTED ON CRAN R 3.6.1
 # Last Updated: 11/16/2019
+
 # Check your R environment version
+# Should be close to the tested version(s)
 version
 
 
 
 # 1) INSTALL & LOAD PACKAGES
+
 # a) INSTALL Core Modeling Packages
-install.packages('ceterisParibus')
+install.packages('mlr')
 install.packages('kernlab')
 install.packages('randomForest')
 install.packages('xgboost')
-# ML Orchestration/Helper Packages
+# b) ML Orchestration/Explainer/Helper Packages
+install.packages('ceterisParibus')
 install.packages('breakDown')
 install.packages('DALEX')
 install.packages('ingredients')
-install.packages('mlr')
 install.packages('pdp')
 
-# b) LOAD Package
+# b) LOAD Packages
 # Core Modeling Packages
-library(ceterisParibus)     # Used for What-If Charts
+library(mlr)                # Used for training/orchestrating models
 library(kernlab)
 library(randomForest)       # Used For RandomForest classifier
 library(xgboost)            # Used for XgBoost classifier
-# Core Modeling Packages
-library(breakDown)
-library(ingredients)
+# ML Orchestration/Explainer/Helper Packages
+library(ceterisParibus)     # Used for What-If Charts
+library(breakDown)          # Used for Model Explainers
+library(ingredients)        # Used for Model Explainers
 library(DALEX)              # Used for Model Explainers
-library(mlr)                # Used for training/orchestrating models
-library(pdp)
+library(pdp)                # Used for Model Explainers
 
 # c) Check versions (optional)
+# Tested on..
+# mlr_2.15.0
+# ceterisParibus_0.3.1
+# DALEX_0.4.9
+# breakDown_0.1.6
 sessionInfo()
 
 # 2) SETUP TRAINING, VALIDATION & COMBINED DATA SETS
 
 # a) Set working directory
 getwd()
+# Working Directory format for macOS
 wdPath <- "/Users/bartczernicki-msft/Desktop/SourceCode/BaseballHOFDalex"
+# Working Directory format for Windows OS
 # wdPath <- "C:\\Users\\bart\\Downloads\\BaseballHOFPredictionWithMlrAndDALEX-master\\BaseballHOFPredictionWithMlrAndDALEX-master\\Source"
 setwd(wdPath)
 
 # b) Load Training Data CSV Files
+# Custom sampling was used to build this, using simple techniques
+# Note: Full proper model leverages re-sampling based on baseball eras, adjustments to the rules as well as player position
 trainingData <- read.csv(file="BaseballHOFTrainingv2.csv", header=TRUE, sep=",")
 validationData <- read.csv(file="BaseballHOFValidationv2.csv", header=TRUE, sep=",")
 combinedData <- rbind(trainingData, validationData)
@@ -80,12 +92,14 @@ classif_task_combined <- makeClassifTask(id = "class2", data = combinedData, tar
 
 # C) Make Learners - Random Forest, GLM, XgBoost (MLR package construct)
 # Get a list of available learners (will list available and what learners are installed)
+# Note: Any of the learners below can be used
 listLearners("classif", properties = c("twoclass", "prob"))
 
 # Make different learners (simple - using default hyperparameters)
 classif_lrn_rf <- makeLearner("classif.randomForest", predict.type = "prob")
 classif_lrn_glm <- makeLearner("classif.binomial", predict.type = "prob")
 classif_lrn_xgboost <- makeLearner("classif.xgboost", predict.type = "prob")
+# Note: Ignore warning about NAs (harmless warning)
 
 # d) Traing the classification models using learners (and their accompanying parameters)
 # Run this command for MLR configuration: ?configureMlr
