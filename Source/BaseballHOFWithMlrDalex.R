@@ -1,5 +1,5 @@
 # TESTED ON CRAN R 3.6.1
-# Last Updated: 11/16/2019
+# Last Updated: 05/25/2020
 
 # Check your R environment version
 # Should be close to the tested version(s)
@@ -10,6 +10,8 @@ version
 # 1) INSTALL & LOAD PACKAGES
 
 # a) INSTALL Core Modeling Packages
+install.packages("corrplot")
+install.packages('Hmisc')
 install.packages('mlr')
 install.packages('kernlab')
 install.packages('randomForest')
@@ -19,9 +21,16 @@ install.packages('ceterisParibus')
 install.packages('breakDown')
 install.packages('DALEX')
 install.packages('ingredients')
+install.packages('jsonlite')
 install.packages('pdp')
 
 # b) LOAD Packages
+#Core Statistical Packages
+library(corrplot)
+library(ggplot2)
+library(reshape2)
+library(Hmisc)
+library(stats)
 # Core Modeling Packages
 library(mlr)                # Used for training/orchestrating models
 library(kernlab)
@@ -32,6 +41,7 @@ library(ceterisParibus)     # Used for What-If Charts
 library(breakDown)          # Used for Model Explainers
 library(ingredients)        # Used for Model Explainers
 library(DALEX)              # Used for Model Explainers
+library(jsonlite)           # Used for Model Explainers
 library(pdp)                # Used for Model Explainers
 
 # c) Check versions (optional)
@@ -52,11 +62,12 @@ wdPath <- "/Users/bartczernicki-msft/Desktop/SourceCode/BaseballHOFDalex"
 # wdPath <- "C:\\Users\\bart\\Downloads\\BaseballHOFPredictionWithMlrAndDALEX-master\\BaseballHOFPredictionWithMlrAndDALEX-master\\Source"
 setwd(wdPath)
 
+
 # b) Load Training Data CSV Files
 # Custom sampling was used to build this, using simple techniques
 # Note: Full proper model leverages re-sampling based on baseball eras, adjustments to the rules as well as player position
 trainingData <- read.csv(file="BaseballHOFTrainingv2.csv", header=TRUE, sep=",")
-validationData <- read.csv(file="BaseballHOFValidationv2.csv", header=TRUE, sep=",")
+validationData <- read.csv(file="BaseballHOFTestv2.csv", header=TRUE, sep=",")
 combinedData <- rbind(trainingData, validationData)
 
 # c) Change InductedToHallOfFame as a 1/0 binary factor
@@ -79,7 +90,13 @@ nrow(combinedData)
 # f) Check Validation Data
 head(validationData, 15)
 
-
+# Corelation Matrix
+res2 <-cor.test(combinedData$MVPs, combinedData$TotalPlayerAwards,  method = "spearman")
+cormatrix = rcorr(as.matrix(combinedData), type='spearman')
+cormatrix
+cordata = melt(cormatrix$r)
+ggplot(cordata, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + xlab("") + ylab("")
 
 # 3) MACHINE LEARNING - TRAINING
 
@@ -179,11 +196,14 @@ plotLearnerPrediction(classif_lrn_rf, task = classif_task, features = c("MVPs", 
 
 # a) Build a helper function to extract prediction data, required for DALEX explainers
 y_test <- as.numeric(as.character(validationData$InductedToHallOfFame))
-custom_predict_classif <- function(object, newdata) {pred <- predict(object, newdata=newdata)
-{
-  response <- pred$data[,3]
-  return(response)}  
-}
+custom_predict_classif <- function(object, newdata)
+  {
+    pred <- predict(object, newdata=newdata)
+      {
+        response <- pred$data[,3]
+        return(response)
+      }  
+  }
 
 # b) Build model exmplainers for each of the built models
 explainer_classif_rf <- DALEX::explain(classif_rf, data=validationData, y=y_test, label= "rf", predict_function = custom_predict_classif)
@@ -207,27 +227,27 @@ plot(vi_classif_rf) #Plot RF feature importance
 plot(vi_classif_xgboost) #Plot XgBoost feature importance
 
 # Variable Response - All Star Appearances Feature
-vr_AllStarAppearances_rf  <- variable_response(explainer_classif_rf, variable = "AllStarAppearances", type = "pdp")
-vr_AllStarAppearances_glm  <- variable_response(explainer_classif_glm, variable = "AllStarAppearances", type = "pdp")
-vr_AllStarAppearances_xgboost  <- variable_response(explainer_classif_xgboost, variable = "AllStarAppearances", type = "pdp")
+vr_AllStarAppearances_rf = partial_dependency(explainer_classif_rf, variables = "AllStarAppearances")
+vr_AllStarAppearances_glm  <- partial_dependency(explainer_classif_glm, variables = "AllStarAppearances")
+vr_AllStarAppearances_xgboost  <- partial_dependency(explainer_classif_xgboost, variables = "AllStarAppearances")
 plot(vr_AllStarAppearances_rf, vr_AllStarAppearances_glm, vr_AllStarAppearances_xgboost)
 
 # Variable Response - Random Forest Model - HR Feature
-vr_hr_rf  <- variable_response(explainer_classif_rf, variable = "HR", type = "pdp")
-vr_hr_glm  <- variable_response(explainer_classif_glm, variable = "HR", type = "pdp")
-vr_hr_xgboost  <- variable_response(explainer_classif_xgboost, variable = "HR", type = "pdp")
+vr_hr_rf  <- partial_dependency(explainer_classif_rf, variables = "HR")
+vr_hr_glm  <- partial_dependency(explainer_classif_glm, variables = "HR")
+vr_hr_xgboost  <- partial_dependency(explainer_classif_xgboost, variables = "HR")
 plot(vr_hr_rf, vr_hr_glm, vr_hr_xgboost)
 
 # Variable Response - Random Forest Model - MVP Feature
-vr_mvp_rf  <- variable_response(explainer_classif_rf, variable = "MVPs", type = "pdp")
-vr_mvp_glm  <- variable_response(explainer_classif_glm, variable = "MVPs", type = "pdp")
-vr_mvp_xgboost  <- variable_response(explainer_classif_xgboost, variable = "MVPs", type = "pdp")
+vr_mvp_rf  <- partial_dependency(explainer_classif_rf, variables = "MVPs")
+vr_mvp_glm  <- partial_dependency(explainer_classif_glm, variables = "MVPs")
+vr_mvp_xgboost  <- partial_dependency(explainer_classif_xgboost, variables = "MVPs")
 plot(vr_mvp_rf, vr_mvp_glm, vr_mvp_xgboost)
 
 # Variable Response - Random Forest Model - TB (Total Bases) Feature
-vr_tb_rf  <- variable_response(explainer_classif_rf, variable = "TB", type = "pdp")
-vr_tb_glm  <- variable_response(explainer_classif_glm, variable = "TB", type = "pdp")
-vr_tb_xgboost  <- variable_response(explainer_classif_xgboost, variable = "TB", type = "pdp")
+vr_tb_rf  <- partial_dependency(explainer_classif_rf, variables = "TB")
+vr_tb_glm  <- partial_dependency(explainer_classif_glm, variables= "TB")
+vr_tb_xgboost  <- partial_dependency(explainer_classif_xgboost, variables = "TB")
 plot(vr_tb_rf, vr_tb_glm, vr_tb_xgboost)
 
 # Variable Response - Random Forest Model - GoldGloves Feature
