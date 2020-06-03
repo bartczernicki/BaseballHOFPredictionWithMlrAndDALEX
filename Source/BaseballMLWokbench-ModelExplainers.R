@@ -122,6 +122,11 @@ getBaseballHofPrediction <- function(httpObject, newdata)
 # b) Build model explainers for each of the used algorithms
 # ?DALEX::explain
 IsDevelopment <- TRUE
+#Ensemble
+httpObject_EnsembleOnHallOfFameBallot <-list(IsDevelopment=TRUE, PredictionType="OnHallOfFameBallot", ModelAlgorithm="Ensemble", AzureFunctionBaseUrl=azureFunctionBaseUrl)
+explainer_RemoteMlNet_EnsembleOnHallOfFameBallot <- DALEX::explain(httpObject_EnsembleOnHallOfFameBallot, data=MLBBaseballBatters, y=y_OnHallOfFameBallot, label= "MLNetEnsemble-OnHallOfFameBallot", predict_function = getBaseballHofPrediction, type="classification")
+httpObject_EnsembleInductedToHallOfFame <-list(IsDevelopment=TRUE, PredictionType="InductedToHallOfFame", ModelAlgorithm="Ensemble", AzureFunctionBaseUrl=azureFunctionBaseUrl)
+explainer_RemoteMlNet_EnsembleInductedToHallOfFame <- DALEX::explain(httpObject_EnsembleInductedToHallOfFame, data=MLBBaseballBatters, y=y_InductedToHallOfFame, label= "MLNetEnsemble-InductedToHallOfFame", predict_function = getBaseballHofPrediction, type="classification")
 #FastTree
 httpObject_FastTreeOnHallOfFameBallot <-list(IsDevelopment=TRUE, PredictionType="OnHallOfFameBallot", ModelAlgorithm="FastTree", AzureFunctionBaseUrl=azureFunctionBaseUrl)
 explainer_RemoteMlNet_FastTreeOnHallOfFameBallot <- DALEX::explain(httpObject_FastTreeOnHallOfFameBallot, data=MLBBaseballBatters, y=y_OnHallOfFameBallot, label= "MLNetFastTree-OnHallOfFameBallot", predict_function = getBaseballHofPrediction, type="classification")
@@ -141,6 +146,9 @@ explainer_RemoteMlNet_LightGbmInductedToHallOfFame <- DALEX::explain(httpObject_
 
 # c) Global Explainer - Model Performance
 # ?model_performance
+#Ensemble
+modelPerformance_RemoteMlNetGam_EnsembleInductedToHallOfFame <- DALEX::model_performance(explainer_RemoteMlNet_EnsembleInductedToHallOfFame, cutoff = 0.5)
+modelPerformance_RemoteMlNetGam_EnsembleOnHallOfFameBallot <- DALEX::model_performance(explainer_RemoteMlNet_EnsembleOnHallOfFameBallot, cutoff = 0.5)
 #FastTree
 modelPerformance_RemoteMlNetGam_FastTreeInductedToHallOfFame <- DALEX::model_performance(explainer_RemoteMlNet_FastTreeInductedToHallOfFame, cutoff = 0.5)
 modelPerformance_RemoteMlNetGam_FastTreeOnHallOfFameBallot <- DALEX::model_performance(explainer_RemoteMlNet_FastTreeOnHallOfFameBallot, cutoff = 0.5)
@@ -150,13 +158,16 @@ modelPerformance_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot <- D
 #LightGbm
 modelPerformance_RemoteMlNetGam_LightGbmInductedToHallOfFame <- DALEX::model_performance(explainer_RemoteMlNet_LightGbmInductedToHallOfFame, cutoff = 0.5)
 modelPerformance_RemoteMlNetGam_LightGbmOnHallOfFameBallot <- DALEX::model_performance(explainer_RemoteMlNet_LightGbmOnHallOfFameBallot, cutoff = 0.5)
-plotModelPerformanceInductedToHallOfFame <- plot(modelPerformance_RemoteMlNetGam_FastTreeInductedToHallOfFame, modelPerformance_RemoteMlNetGam_GeneralizedAdditiveModelsInductedToHallOfFame, modelPerformance_RemoteMlNetGam_LightGbmInductedToHallOfFame)
+plotModelPerformanceInductedToHallOfFame <- plot(modelPerformance_RemoteMlNetGam_EnsembleInductedToHallOfFame, modelPerformance_RemoteMlNetGam_FastTreeInductedToHallOfFame, modelPerformance_RemoteMlNetGam_GeneralizedAdditiveModelsInductedToHallOfFame, modelPerformance_RemoteMlNetGam_LightGbmInductedToHallOfFame)
 savePlot("GlobalExplainer-ModelPerformance-Models-InductedToHallOfFame", plotModelPerformanceInductedToHallOfFame, TRUE)
-plotModelPerformanceOnHallOfFameBallot <- plot(modelPerformance_RemoteMlNetGam_LightGbmOnHallOfFameBallot, modelPerformance_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot, modelPerformance_RemoteMlNetGam_LightGbmOnHallOfFameBallot)
+plotModelPerformanceOnHallOfFameBallot <- plot(modelPerformance_RemoteMlNetGam_EnsembleOnHallOfFameBallot, modelPerformance_RemoteMlNetGam_LightGbmOnHallOfFameBallot, modelPerformance_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot, modelPerformance_RemoteMlNetGam_LightGbmOnHallOfFameBallot)
 savePlot("GlobalExplainer-ModelPerformance-Models-OnHallOfFameBallot", plotModelPerformanceOnHallOfFameBallot, TRUE)
 
 # d) Global Explainer - Model Parts | Feature Importance 
 ?ingredients::feature_importance
+#Ensemble
+featureImportance_RemoteMlNetGam_EnsembleInductedToHallOfFame <- ingredients::feature_importance(explainer_RemoteMlNet_EnsembleInductedToHallOfFame, loss_function = loss_root_mean_square)
+featureImportance_RemoteMlNetGam_EnsembleOnHallOfFameBallot <- ingredients::feature_importance(explainer_RemoteMlNet_EnsembleOnHallOfFameBallot, loss_function = loss_root_mean_square)
 #FastTree
 featureImportance_RemoteMlNetGam_FastTreeInductedToHallOfFame <- ingredients::feature_importance(explainer_RemoteMlNet_FastTreeInductedToHallOfFame, loss_function = loss_root_mean_square)
 featureImportance_RemoteMlNetGam_FastTreeOnHallOfFameBallot <- ingredients::feature_importance(explainer_RemoteMlNet_FastTreeOnHallOfFameBallot, loss_function = loss_root_mean_square)
@@ -166,9 +177,11 @@ featureImportance_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot <- 
 #LightGbm
 featureImportance_RemoteMlNetGam_LightGbmInductedToHallOfFame <- feature_importance(explainer_RemoteMlNet_LightGbmInductedToHallOfFame, loss_function = loss_root_mean_square)
 featureImportance_RemoteMlNetGam_LightGbmOnHallOfFameBallot <- feature_importance(explainer_RemoteMlNet_LightGbmOnHallOfFameBallot, loss_function = loss_root_mean_square)
+savePlot("GlobalExplainer-ModelParts-FeatureImportance-InductedToHallOfFame-Ensemble", plot(featureImportance_RemoteMlNetGam_EnsembleInductedToHallOfFame), TRUE)
 savePlot("GlobalExplainer-ModelParts-FeatureImportance-InductedToHallOfFame-FastTree", plot(featureImportance_RemoteMlNetGam_FastTreeInductedToHallOfFame), TRUE)
 savePlot("GlobalExplainer-ModelParts-FeatureImportance-InductedToHallOfFame-GeneralizedAdditiveModels", plot(featureImportance_RemoteMlNetGam_GeneralizedAdditiveModelsInductedToHallOfFame), TRUE)
 savePlot("GlobalExplainer-ModelParts-FeatureImportance-InductedToHallOfFame-LightGbm", plot(featureImportance_RemoteMlNetGam_LightGbmInductedToHallOfFame), TRUE)
+savePlot("GlobalExplainer-ModelParts-FeatureImportance-OnHallOfFameBallot-Ensemble", plot(featureImportance_RemoteMlNetGam_EnsembleOnHallOfFameBallot), TRUE)
 savePlot("GlobalExplainer-ModelParts-FeatureImportance-OnHallOfFameBallot-FastTree", plot(featureImportance_RemoteMlNetGam_FastTreeOnHallOfFameBallot), TRUE)
 savePlot("GlobalExplainer-ModelParts-FeatureImportance-OnHallOfFameBallot-GeneralizedAdditiveModels", plot(featureImportance_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot), TRUE)
 savePlot("GlobalExplainer-ModelParts-FeatureImportance-OnHallOfFameBallot-LightGbm", plot(featureImportance_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot), TRUE)
@@ -176,6 +189,9 @@ savePlot("GlobalExplainer-ModelParts-FeatureImportance-OnHallOfFameBallot-LightG
 
 # e) Global Explainer - Model Profile | Partial Dependency Profile
 # ?model_profile
+#Ensemble -TotalPlayerAwards
+modelProfile_RemoteMlNetGam_EnsembleInductedToHallOfFame_TotalPlayerAwards <- model_profile(explainer_RemoteMlNet_EnsembleInductedToHallOfFame, variables = "TotalPlayerAwards", N=200)
+modelProfile_RemoteMlNetGam_EnsembleOnHallOfFameBallot_TotalPlayerAwards <- model_profile(explainer_RemoteMlNet_EnsembleOnHallOfFameBallot, variables = "TotalPlayerAwards", N=200)
 #FastTree -TotalPlayerAwards
 modelProfile_RemoteMlNetGam_FastTreeInductedToHallOfFame_TotalPlayerAwards <- model_profile(explainer_RemoteMlNet_FastTreeInductedToHallOfFame, variables = "TotalPlayerAwards", N=200)
 modelProfile_RemoteMlNetGam_FastTreeOnHallOfFameBallot_TotalPlayerAwards <- model_profile(explainer_RemoteMlNet_FastTreeOnHallOfFameBallot, variables = "TotalPlayerAwards", N=200)
@@ -186,10 +202,12 @@ modelProfile_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot_TotalPla
 modelProfile_RemoteMlNetGam_LightGbmInductedToHallOfFame_TotalPlayerAwards <- model_profile(explainer_RemoteMlNet_LightGbmInductedToHallOfFame, variables = "TotalPlayerAwards", N=200)
 modelProfile_RemoteMlNetGam_LightGbmOnHallOfFameBallot_TotalPlayerAwards <- model_profile(explainer_RemoteMlNet_LightGbmOnHallOfFameBallot, variables = "TotalPlayerAwards", N=200)
 
-savePlot("GlobalExplainer-ModelProfile-PartialDependencyProfile-OnHallOfFameBallot-TotalPlayerAwards-Models", plot(modelProfile_RemoteMlNetGam_FastTreeOnHallOfFameBallot_TotalPlayerAwards$agr_profiles,
+savePlot("GlobalExplainer-ModelProfile-PartialDependencyProfile-OnHallOfFameBallot-TotalPlayerAwards-Models", plot(modelProfile_RemoteMlNetGam_EnsembleOnHallOfFameBallot_TotalPlayerAwards,
+                                                                                                 modelProfile_RemoteMlNetGam_FastTreeOnHallOfFameBallot_TotalPlayerAwards$agr_profiles,
                                                                                                  modelProfile_RemoteMlNetGam_GeneralizedAdditiveModelsOnHallOfFameBallot_TotalPlayerAwards$agr_profiles,
                                                                                                  modelProfile_RemoteMlNetGam_LightGbmOnHallOfFameBallot_TotalPlayerAwards$agr_profiles), TRUE)
-savePlot("GlobalExplainer-ModelProfile-PartialDependencyProfile-InductedToHallOfFame-TotalPlayerAwards-Models", plot(modelProfile_RemoteMlNetGam_FastTreeInductedToHallOfFame_TotalPlayerAwards$agr_profiles,
+savePlot("GlobalExplainer-ModelProfile-PartialDependencyProfile-InductedToHallOfFame-TotalPlayerAwards-Models", plot(modelProfile_RemoteMlNetGam_EnsembleInductedToHallOfFame_TotalPlayerAwards,
+                                                                                                 modelProfile_RemoteMlNetGam_FastTreeInductedToHallOfFame_TotalPlayerAwards$agr_profiles,
                                                                                                  modelProfile_RemoteMlNetGam_GeneralizedAdditiveModelsInductedToHallOfFame_TotalPlayerAwards$agr_profiles,
                                                                                                  modelProfile_RemoteMlNetGam_LightGbmInductedToHallOfFame_TotalPlayerAwards$agr_profiles), TRUE)
 
@@ -279,53 +297,52 @@ overallComparisonOnHallOfFameBallot <- DALEXtra::overall_comparison(explainer_Re
 plot(overallComparisonOnHallOfFameBallot)
 
 #?DALEXtra::funnel_measure
-funnelLightGbmeOnHallOfFameBallot_vsOther <- DALEXtra::funnel_measure(explainer_RemoteMlNet_LightGbmOnHallOfFameBallot, list(explainer_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot, explainer_RemoteMlNet_FastTreeOnHallOfFameBallot), measure_function = loss_root_mean_square, nbins = 5)
-savePlot("GlobalExplainer-ModelDiagnostics-ModelComparison-OnHallOfFameBallot", plot(funnelLightGbmeOnHallOfFameBallot_vsOther)[[1]], TRUE)
-funnelLightGbmeInductedToHallOfFame_vsOther <- DALEXtra::funnel_measure(explainer_RemoteMlNet_LightGbmInductedToHallOfFame, list(explainer_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame, explainer_RemoteMlNet_FastTreeInductedToHallOfFame), measure_function = loss_root_mean_square, nbins = 5)
-savePlot("GlobalExplainer-ModelDiagnostics-ModelComparison-InductedToHallOfFame", plot(funnelLightGbmeInductedToHallOfFame_vsOther)[[1]], TRUE)
+funnelLightGbmInductedToHallOfFame_vsOther <- DALEXtra::funnel_measure(explainer_RemoteMlNet_LightGbmInductedToHallOfFame, list(explainer_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame, explainer_RemoteMlNet_FastTreeInductedToHallOfFame), measure_function = loss_root_mean_square, nbins = 5)
+savePlot("GlobalExplainer-ModelDiagnostics-ModelComparison-InductedToHallOfFame-LightGbm", plot(funnelLightGbmInductedToHallOfFame_vsOther)[[1]], TRUE)
+funnelEnsembleInductedToHallOfFame_vsOther <- DALEXtra::funnel_measure(explainer_RemoteMlNet_EnsembleInductedToHallOfFame, list(explainer_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame, explainer_RemoteMlNet_FastTreeInductedToHallOfFame, explainer_RemoteMlNet_LightGbmInductedToHallOfFame), measure_function = loss_root_mean_square, nbins = 5)
+savePlot("GlobalExplainer-ModelDiagnostics-ModelComparison-InductedToHallOfFame-Ensemble", plot(funnelEnsembleInductedToHallOfFame_vsOther)[[1]], TRUE)
+funnelLightGbmOnHallOfFameBallot_vsOther <- DALEXtra::funnel_measure(explainer_RemoteMlNet_LightGbmOnHallOfFameBallot, list(explainer_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot, explainer_RemoteMlNet_FastTreeOnHallOfFameBallot), measure_function = loss_root_mean_square, nbins = 5)
+savePlot("GlobalExplainer-ModelDiagnostics-ModelComparison-OnHallOfFameBallot-LightGbm", plot(funnelLightGbmOnHallOfFameBallot_vsOther)[[1]], TRUE)
+funnelEnsembleOnHallOfFameBallot_vsOther <- DALEXtra::funnel_measure(explainer_RemoteMlNet_EnsembleOnHallOfFameBallot, list(explainer_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot, explainer_RemoteMlNet_FastTreeOnHallOfFameBallot, explainer_RemoteMlNet_LightGbmOnHallOfFameBallot), measure_function = loss_root_mean_square, nbins = 5)
+savePlot("GlobalExplainer-ModelDiagnostics-ModelComparison-OnHallOfFameBallot-Ensemble", plot(funnelEnsembleOnHallOfFameBallot_vsOther)[[1]], TRUE)
+
 
 ######################################################
 # 4) MACHINE LEARNING - LOCAL INSTANCE LEVEL MODEL EXPLAINER
 
 # a) Local Instance Explainer - Prediction
-mikeTroutData = head(MLBBaseballBatters[MLBBaseballBatters$FullPlayerName == "Ichiro Suzuki",], 1)
-prediction_RemoteMlNet_FastTreeOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_FastTreeOnHallOfFameBallot, mikeTroutData)
-prediction_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_GeneralizedAdditiveModelsOnHallOfFameBallot, mikeTroutData)
-prediction_RemoteMlNet_LightGbmOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_LightGbmOnHallOfFameBallot, mikeTroutData)
-print(prediction_RemoteMlNet_FastTreeOnHallOfFameBallot_mikeTrout)
-print(prediction_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot_mikeTrout)
-print(prediction_RemoteMlNet_LightGbmOnHallOfFameBallot_mikeTrout)
-prediction_RemoteMlNet_FastTreeInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_FastTreeInductedToHallOfFame, mikeTroutData)
-prediction_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_GeneralizedAdditiveModelsInductedToHallOfFame, mikeTroutData)
-prediction_RemoteMlNet_LightGbmInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_LightGbmInductedToHallOfFame, mikeTroutData)
-print(prediction_RemoteMlNet_FastTreeInductedToHallOfFame_mikeTrout)
-print(prediction_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame_mikeTrout)
-print(prediction_RemoteMlNet_LightGbmInductedToHallOfFame_mikeTrout)
-
 mikeTroutData = head(MLBBaseballBatters[MLBBaseballBatters$FullPlayerName == "Mike Trout",], 1)
+prediction_RemoteMlNet_EnsembleOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_EnsembleOnHallOfFameBallot, mikeTroutData)
 prediction_RemoteMlNet_FastTreeOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_FastTreeOnHallOfFameBallot, mikeTroutData)
 prediction_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_GeneralizedAdditiveModelsOnHallOfFameBallot, mikeTroutData)
 prediction_RemoteMlNet_LightGbmOnHallOfFameBallot_mikeTrout <- getBaseballHofPrediction(httpObject_LightGbmOnHallOfFameBallot, mikeTroutData)
+print(prediction_RemoteMlNet_EnsembleOnHallOfFameBallot_mikeTrout)
 print(prediction_RemoteMlNet_FastTreeOnHallOfFameBallot_mikeTrout)
 print(prediction_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot_mikeTrout)
 print(prediction_RemoteMlNet_LightGbmOnHallOfFameBallot_mikeTrout)
+prediction_RemoteMlNet_EnsembleInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_EnsembleInductedToHallOfFame, mikeTroutData)
 prediction_RemoteMlNet_FastTreeInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_FastTreeInductedToHallOfFame, mikeTroutData)
 prediction_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_GeneralizedAdditiveModelsInductedToHallOfFame, mikeTroutData)
 prediction_RemoteMlNet_LightGbmInductedToHallOfFame_mikeTrout <- getBaseballHofPrediction(httpObject_LightGbmInductedToHallOfFame, mikeTroutData)
+print(prediction_RemoteMlNet_EnsembleInductedToHallOfFame_mikeTrout)
 print(prediction_RemoteMlNet_FastTreeInductedToHallOfFame_mikeTrout)
 print(prediction_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame_mikeTrout)
 print(prediction_RemoteMlNet_LightGbmInductedToHallOfFame_mikeTrout)
 
 # b) Local Instance Explainer - Prediction Parts | Breakdown
+predictionBreakdown_RemoteMlNet_EnsembleOnHallOfFameBallot_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_EnsembleOnHallOfFameBallot, new_observation = mikeTroutData)
 predictionBreakdown_RemoteMlNet_FastTreeOnHallOfFameBallot_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_FastTreeOnHallOfFameBallot, new_observation = mikeTroutData)
 predictionBreakdown_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot, new_observation = mikeTroutData)
 predictionBreakdown_RemoteMlNet_LightGbmOnHallOfFameBallot_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_LightGbmOnHallOfFameBallot, new_observation = mikeTroutData)
+predictionBreakdown_RemoteMlNet_EnsembleInductedToHallOfFame_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_EnsembleInductedToHallOfFame, new_observation = mikeTroutData)
 predictionBreakdown_RemoteMlNet_FastTreeInductedToHallOfFame_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_FastTreeInductedToHallOfFame, new_observation = mikeTroutData)
 predictionBreakdown_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame, new_observation = mikeTroutData)
 predictionBreakdown_RemoteMlNet_LightGbmInductedToHallOfFame_MikeTrout <- predict_parts_break_down(explainer_RemoteMlNet_LightGbmInductedToHallOfFame, new_observation = mikeTroutData)
+savePlot("LocalExplainer-PredictionParts-BreakDown-OnHallOfFameBallot-Ensemble-MikeTrout", plot(predictionBreakdown_RemoteMlNet_EnsembleOnHallOfFameBallot_MikeTrout), TRUE)
 savePlot("LocalExplainer-PredictionParts-BreakDown-OnHallOfFameBallot-FastTree-MikeTrout", plot(predictionBreakdown_RemoteMlNet_FastTreeOnHallOfFameBallot_MikeTrout), TRUE)
 savePlot("LocalExplainer-PredictionParts-BreakDown-OnHallOfFameBallot-GeneralizedAdditiveModels-MikeTrout", plot(predictionBreakdown_RemoteMlNet_GeneralizedAdditiveModelsOnHallOfFameBallot_MikeTrout), TRUE)
 savePlot("LocalExplainer-PredictionParts-BreakDown-OnHallOfFameBallot-LightGbm-MikeTrout", plot(predictionBreakdown_RemoteMlNet_LightGbmOnHallOfFameBallot_MikeTrout), TRUE)
+savePlot("LocalExplainer-PredictionParts-BreakDown-InductedToHallOfFame-Ensemble-MikeTrout", plot(predictionBreakdown_RemoteMlNet_EnsembleInductedToHallOfFame_MikeTrout), TRUE)
 savePlot("LocalExplainer-PredictionParts-BreakDown-InductedToHallOfFame-FastTree-MikeTrout", plot(predictionBreakdown_RemoteMlNet_FastTreeInductedToHallOfFame_MikeTrout), TRUE)
 savePlot("LocalExplainer-PredictionParts-BreakDown-InductedToHallOfFame-GeneralizedAdditiveModels-MikeTrout", plot(predictionBreakdown_RemoteMlNet_GeneralizedAdditiveModelsInductedToHallOfFame_MikeTrout), TRUE)
 savePlot("LocalExplainer-PredictionParts-BreakDown-InductedToHallOfFame-LightGbm-MikeTrout", plot(predictionBreakdown_RemoteMlNet_LightGbmInductedToHallOfFame_MikeTrout), TRUE)
